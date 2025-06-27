@@ -10,11 +10,11 @@ def test_get_few_shot_prompt_contains_examples_and_user_msg():
     prompt = get_few_shot_prompt(context, user_msg)
 
     example_questions = [
-        "What is KYC in banking?",
-        "How does a credit score affect loan eligibility?",
-        "What is the difference between NEFT and RTGS?",
-        "What is an insurance premium?",
-        "What does 'mutual fund SIP' mean?"
+        "How do I update my address on my policy?",
+        "What documents are needed to file a claim?",
+        "Can I pay my premium online?",
+        "How do I check my claim status?",
+        "What is the grace period for premium payment?"
     ]
 
     for question in example_questions:

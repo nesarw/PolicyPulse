@@ -19,11 +19,9 @@ class LLMClient:
         response.raise_for_status()
         result = response.json()
         # The output format may vary by model; this works for most chat models
-        if isinstance(result, list) and "generated_text" in result[0]:
-            return result[0]["generated_text"].strip()
+        if isinstance(result, list) and "generated_text" in result[-1]:
+            return result[-1]["generated_text"].strip()
         elif isinstance(result, dict) and "generated_text" in result:
             return result["generated_text"].strip()
-        elif isinstance(result, list) and "generated_text" in result[-1]:
-            return result[-1]["generated_text"].strip()
         else:
             return str(result)
