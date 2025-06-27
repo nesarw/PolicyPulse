@@ -52,3 +52,15 @@ streamlit run app.py
 
 [![Open in Streamlit Cloud](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://streamlit.io/)  
 *Replace this link with your deployed app's Streamlit Cloud URL.*
+
+## BFSI Domain Restriction
+
+PolicyPulse is strictly limited to answering questions related to the Banking, Financial Services, and Insurance (BFSI) sector. Any questions outside this domain (e.g., programming, sports, general trivia) will be politely refused by the assistant.
+
+This is enforced by a BFSI domain filter utility (`utils/bfsi_filter.py`) that checks user queries for BFSI relevance before generating a response. You can customize the list of keywords in that file to broaden or narrow the domain as needed.
+
+## Features
+- Conversational interface for BFSI policy and insurance queries
+- Strict refusal to answer out-of-domain questions
+- Context-aware answers with related suggestions
+- Easy extensibility for BFSI topics

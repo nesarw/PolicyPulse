@@ -7,6 +7,7 @@ from utils.session_store import init_session, append_message, get_conversation
 import os
 import re
 from utils.vector_store import build_index, query_index
+from utils.bfsi_filter import is_bfsi_query
 
 # Comprehensive KB – covers health, home, claims, and general policy info
 KB_DOCS = [
@@ -65,6 +66,14 @@ def on_send():
     user_input = st.session_state.user_input
     if user_input.strip():
         append_message('user', user_input.strip())
+        if not is_bfsi_query(user_input):
+            refusal_message = (
+                "I'm sorry, I can only answer questions related to banking, financial services, and insurance (BFSI). "
+                "Please ask a question relevant to these topics."
+            )
+            append_message('assistant', refusal_message)
+            st.session_state.user_input = ''
+            return
         passages = query_index(faiss_index, KB_DOCS, user_input, k=3)
         prompt = get_few_shot_prompt(st.session_state.context_page, user_input.strip(), kb_passages=passages)
         reply, rationale = llm.chat(prompt, kb_passages=passages)
