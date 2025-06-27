@@ -24,21 +24,6 @@ chat_container = st.container()
 
 conversation = get_conversation()
 
-with chat_container:
-    for idx, msg in enumerate(conversation):
-        if msg['role'] == 'user':
-            st.markdown(f"**You:** {msg['content']}")
-        else:
-            st.markdown(f"**Bot:** {msg['content']}")
-            # Parse suggestions from assistant message
-            suggestions = []
-            if 'You might also ask:' in msg['content']:
-                after = msg['content'].split('You might also ask:', 1)[-1]
-                # Find up to 3 lines that look like suggestions
-                suggestions = [line.strip('- ').strip() for line in after.strip().split('\n') if line.strip()][:3]
-            for suggestion in suggestions:
-                st.button(suggestion, key=f'suggestion_{idx}_{suggestion}')
-
 # User input area
 if 'user_input' not in st.session_state:
     st.session_state.user_input = ''
@@ -48,8 +33,44 @@ def on_send():
     if user_input.strip():
         append_message('user', user_input.strip())
         prompt = get_few_shot_prompt(st.session_state.context_page, user_input.strip())
-        reply = llm.chat(prompt)
-        append_message('assistant', reply)
+        reply, rationale = llm.chat(prompt)
+        append_message('assistant', reply, rationale=rationale)
         st.session_state.user_input = ''  # This is now safe in the callback
+
+with chat_container:
+    for idx, msg in enumerate(conversation):
+        if msg['role'] == 'user':
+            st.markdown(f"**You:** {msg['content']}")
+        else:
+            reply = msg['content']  # Always a string
+            # Only use up to the next "User:" or "Assistant:" if present
+            for tag in ["User:", "Assistant:"]:
+                if tag in reply:
+                    reply = reply.split(tag, 1)[0].strip()
+            # Split out the main answer and suggestions
+            main_reply = reply
+            suggestions = []
+            if 'You might also ask:' in reply:
+                main_reply, after = reply.split('You might also ask:', 1)
+                suggestions = [line.strip('- ').strip() for line in after.strip().split('\n') if line.strip()][:3]
+            else:
+                # Fallback: scan for lines that look like questions or start with '-'
+                lines = reply.split('\n')
+                for line in lines:
+                    line_strip = line.strip()
+                    if (line_strip.startswith('-') or (line_strip.endswith('?') and len(line_strip) > 8)) and len(suggestions) < 3:
+                        suggestions.append(line_strip.strip('- ').strip())
+
+            st.markdown(f"**Bot:** {main_reply.strip()}")
+
+            if suggestions:
+                st.markdown("**You might also ask:**")
+                for suggestion in suggestions:
+                    if st.button(suggestion, key=f'suggestion_{idx}_{suggestion}'):
+                        st.session_state.user_input = suggestion
+                        on_send()
+                        st.rerun()
+            if 'rationale' in msg and msg['rationale']:
+                st.markdown(f"*🔍 Rationale:* {msg['rationale']}", unsafe_allow_html=True)
 
 st.text_input('Type your message:', key='user_input', on_change=on_send)

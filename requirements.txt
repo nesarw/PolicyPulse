@@ -1,3 +1,5 @@
 streamlit
 openai
 jinja2
+faiss-cpu
+sentence-transformers

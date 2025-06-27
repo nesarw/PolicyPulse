@@ -9,11 +9,14 @@ def init_session():
         st.session_state.context_page = None
 
 
-def append_message(role, content):
-    """Append a message to the conversation in session state."""
+def append_message(role, content, rationale=None):
+    """Append a message to the conversation in session state. Optionally include rationale for assistant replies."""
     if 'conversation' not in st.session_state:
         st.session_state.conversation = []
-    st.session_state.conversation.append({'role': role, 'content': content})
+    entry = {'role': role, 'content': content}
+    if role == 'assistant' and rationale:
+        entry['rationale'] = rationale
+    st.session_state.conversation.append(entry)
 
 
 def get_conversation():
