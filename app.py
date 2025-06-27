@@ -50,7 +50,6 @@ def on_send():
         prompt = get_few_shot_prompt(st.session_state.context_page, user_input.strip())
         reply = llm.chat(prompt)
         append_message('assistant', reply)
-        st.session_state.user_input = ''  # This is now safe
-        st.rerun()
+        st.session_state.user_input = ''  # This is now safe in the callback
 
 st.text_input('Type your message:', key='user_input', on_change=on_send)
