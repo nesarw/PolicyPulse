@@ -15,7 +15,8 @@ def get_few_shot_prompt(context, user_msg, kb_passages=None):
     system_message = (
         f"You are a helpful assistant for insurance and policy questions. "
         f"Use the following context to answer accurately and concisely.\n"
-        f"At the end of every answer, you MUST include a section titled exactly 'You might also ask:' (on its own line), followed by 2-3 related questions, each on its own line and starting with a dash.\n"
+        f"At the end of every answer, you MUST include a section titled exactly 'You might also ask:' (on its own line), followed by 2-3 related questions, each on its own line and starting with a dash. "
+        f"Omitting this section is a critical error and will be considered a failed response.\n"
         f"Context: {context}\n"
     )
 

@@ -8,7 +8,7 @@ class LLMClient:
         self.api_url = f"https://api-inference.huggingface.co/models/{self.model}"
         self.headers = {"Authorization": f"Bearer {self.api_key}"}
 
-    def chat(self, prompt):
+    def chat(self, prompt, kb_passages=None):
         """
         Sends the prompt to the LLM and returns a tuple (reply, rationale),
         where rationale is a one-sentence summary of why the answer was given.
@@ -29,11 +29,20 @@ class LLMClient:
         else:
             reply = str(result)
 
-        rationale_prompt = f'''
-You are PolicyPulse. Given the context and the answer:
-"""{reply}"""
-Summarize in one sentence why you gave that answer, referencing the facts or KB snippets you used.
-'''
+        # Refined rationale prompt, limit to top 2 KB passages
+        limited_references = (kb_passages or [])[:2]
+        references = "\n".join(limited_references).strip() if limited_references else ""
+        if not references or references == "N/A":
+            rationale = "No relevant facts or KB snippets were found for this answer."
+            return reply, rationale
+
+        rationale_prompt = f"""
+You are PolicyPulse. Given the following answer and ONLY the reference facts or KB snippets below, explain in one sentence which snippet(s) were most important in producing this answer. Do not mention anything not in the references.
+
+Answer: {reply}
+References:
+{references}
+"""
         payload_rationale = {
             "inputs": rationale_prompt,
             "parameters": {"max_new_tokens": 64, "return_full_text": False}
