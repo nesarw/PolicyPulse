@@ -1,28 +1,27 @@
 # PolicyPulse
 
-[![Streamlit Cloud](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://streamlit.io/) <!-- TODO: Replace with your app's Streamlit Cloud URL -->
+[![Streamlit Cloud](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://streamlit.io/)
 
 ## Overview
 
-PolicyPulse is an interactive Streamlit application designed to help users analyze, discuss, and visualize policy documents and related data. With a conversational interface and context-aware features, PolicyPulse aims to make policy analysis more accessible and engaging for everyone.
+PolicyPulse is an advanced Streamlit GenAI app for **document-grounded Q&A** on insurance policy PDFs. It uses Retrieval-Augmented Generation (RAG) with robust heuristics and LLMs (Groq Llama-4, HuggingFace, or fallback) to answer user questions based strictly on the uploaded document.
 
-## 🆕 New Features: Document-Constrained RAG
+## Key Features (2024)
 
-PolicyPulse now supports **document-constrained Retrieval-Augmented Generation (RAG)** that allows users to:
+- 📁 **PDF Upload**: Upload any insurance policy PDF and ask questions about its contents.
+- 🧠 **Dynamic RAG**: In-memory FAISS vector search with SentenceTransformer embeddings.
+- 🗂️ **Advanced Heuristics**: Extracts fields like policy number, sum insured, nominee, customer name, address, GSTIN, premium, plan, proposer, and more—even from tables.
+- 💬 **LLM Integration**: Uses Groq's Meta-Llama-4-Scout-17B-16E-Instruct (via OpenAI v1+ API) as primary, with HuggingFace fallback.
+- 🛡️ **BFSI Domain Restriction**: Only answers banking, financial services, and insurance questions.
+- 🔄 **Fallback Logic**: If document search fails, falls back to a general BFSI knowledge base.
+- 📝 **Prompt Engineering**: Prompts instruct the LLM to extract and present table fields in a structured way.
+- 🧪 **Session State**: Uploaded document and index persist for the session.
 
-- 📁 **Upload PDF policy documents** and ask questions based on their specific contents
-- 🧠 **Dynamic vector search** using FAISS and SentenceTransformers
-- 💬 **Context-aware responses** that reference the uploaded document
-- 🛡️ **Intelligent fallback** to general BFSI knowledge base when document content isn't relevant
-- 📊 **Similarity threshold filtering** to ensure only relevant document chunks are used
+## Advanced Field Extraction
 
-### How It Works
-
-1. **Upload a PDF**: Users can upload any PDF policy document using the file uploader
-2. **Automatic Processing**: The system extracts text, chunks it into overlapping segments, and builds a FAISS vector index
-3. **Smart Retrieval**: When users ask questions, the system searches the document chunks for relevant information
-4. **Context Injection**: Relevant document chunks are injected into the LLM prompt as context
-5. **Fallback Protection**: If no relevant document content is found, the system falls back to the general BFSI knowledge base
+- **Heuristics for all major fields**: policy number, sum insured, customer name, insured name, policyholder, nominee (with table extraction), address, mobile/phone, email, GSTIN, plan/product, premium, date of inception, collection number/date, policy category, proposer, and more.
+- **Table Extraction**: For fields like nominee, the app extracts the header and table rows for structured answers.
+- **Prompt Examples**: Few-shot prompt includes structured nominee extraction for LLM guidance.
 
 ## Setup Instructions
 
@@ -31,12 +30,10 @@ PolicyPulse now supports **document-constrained Retrieval-Augmented Generation (
    git clone https://github.com/nesarw/PolicyPulse.git
    cd PolicyPulse
    ```
-
 2. **Create a virtual environment:**
    ```bash
    python3 -m venv .venv
    ```
-
 3. **Activate the virtual environment:**
    - On macOS/Linux:
      ```bash
@@ -46,7 +43,6 @@ PolicyPulse now supports **document-constrained Retrieval-Augmented Generation (
      ```bash
      .venv\Scripts\activate
      ```
-
 4. **Install dependencies:**
    ```bash
    pip install -r requirements.txt
@@ -54,85 +50,58 @@ PolicyPulse now supports **document-constrained Retrieval-Augmented Generation (
 
 ## Running Locally
 
-You can use the provided script to set up and launch the app:
-
-```bash
-./run.sh
-```
-
-Or, run manually:
-
 ```bash
 streamlit run app.py
 ```
 
-## Streamlit Cloud
+## Environment Variables
 
-[![Open in Streamlit Cloud](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://streamlit.io/)  
-*Replace this link with your deployed app's Streamlit Cloud URL.*
+- `GROQ_API_KEY` — for Groq Llama-4 (recommended primary LLM)
+- `HF_API_KEY` — for HuggingFace fallback
 
-## BFSI Domain Restriction
-
-PolicyPulse is strictly limited to answering questions related to the Banking, Financial Services, and Insurance (BFSI) sector. Any questions outside this domain (e.g., programming, sports, general trivia) will be politely refused by the assistant.
-
-This is enforced by a BFSI domain filter utility (`utils/bfsi_filter.py`) that checks user queries for BFSI relevance before generating a response. You can customize the list of keywords in that file to broaden or narrow the domain as needed.
-
-## Features
-
-### Core Features
-- 💬 **Conversational interface** for BFSI policy and insurance queries
-- 🛡️ **Strict domain filtering** - refuses to answer out-of-domain questions
-- 🧠 **Context-aware answers** with related suggestions
-- 🔄 **Easy extensibility** for BFSI topics
-
-### Document RAG Features
-- 📁 **PDF Upload**: Accepts PDF policy documents for analysis
-- 🔍 **Text Extraction**: Uses pdfplumber for reliable text extraction
-- ✂️ **Smart Chunking**: Splits text into overlapping chunks (400 chars, 200 char overlap)
-- 🧠 **Vector Search**: FAISS index with SentenceTransformer embeddings
-- 🎯 **Similarity Filtering**: Only uses chunks above similarity threshold (0.3)
-- 🔄 **Intelligent Fallback**: Falls back to general KB when document content isn't relevant
-- 📊 **Real-time Processing**: Processes documents on upload, stores in session state
-
-## Technical Architecture
-
-### Document Processing Pipeline
-1. **PDF Upload** → `st.file_uploader` with PDF validation
-2. **Text Extraction** → `pdfplumber` for reliable text extraction
-3. **Chunking** → Smart text splitting with sentence boundary preservation
-4. **Embedding** → SentenceTransformer (`all-MiniLM-L6-v2`) for vectorization
-5. **Indexing** → FAISS IndexFlatL2 for fast similarity search
-6. **Retrieval** → Similarity search with threshold filtering
-7. **Context Injection** → Document chunks injected into LLM prompt
-
-### Key Components
-- `utils/pdf_processor.py` - PDF text extraction and chunking
-- `utils/vector_store.py` - FAISS indexing and similarity search
-- `prompts/few_shot_templates.py` - Enhanced prompts with document context
-- `app.py` - Main application with document upload and RAG pipeline
-
-## Dependencies
-
-The application requires the following key dependencies:
-- `streamlit` - Web application framework
-- `pdfplumber` - PDF text extraction
-- `faiss-cpu` - Vector similarity search
-- `sentence-transformers` - Text embeddings
-- `openai` - LLM integration
-- `python-dotenv` - Environment variable management
+Add these to your `.env` file:
+```
+GROQ_API_KEY=your-groq-key
+HF_API_KEY=your-huggingface-key
+```
 
 ## Usage Examples
 
-### Document-Based Q&A
-1. Upload a PDF policy document
-2. Ask questions like:
-   - "What is the policy number?"
-   - "What are the coverage limits?"
-   - "How do I file a claim according to this policy?"
-   - "What is the deductible amount?"
+- "What is the policy number?"
+- "Who is the nominee?"
+- "What is the sum insured?"
+- "What is the GSTIN?"
+- "What is the premium?"
+- "Who is the proposer?"
+- "What is the collection date?"
+- "What is the policy category?"
+- "What is the address?"
+- "What is the mobile number?"
+- "What is the email address?"
 
-### General BFSI Q&A
-- "How do I update my address on my policy?"
-- "What documents are needed to file a claim?"
-- "Can I pay my premium online?"
-- "What is the grace period for premium payment?"
+## Technical Architecture
+
+- **Document Upload**: `st.file_uploader` for PDF
+- **Text Extraction**: `pdfplumber` (line-based chunking)
+- **Vector Search**: FAISS + SentenceTransformer
+- **Heuristic Extraction**: Regex and windowed line search for all major fields
+- **LLM Prompting**: Context injected as numbered lines, with explicit instructions for table extraction
+- **LLM Client**: Groq (OpenAI v1+ API) primary, HuggingFace fallback
+- **Session State**: Document and index persist for the session
+
+## Dependencies
+
+- `streamlit`
+- `openai>=1.0.0`
+- `requests`
+- `pdfplumber`
+- `faiss-cpu`
+- `sentence-transformers`
+- `python-dotenv`
+
+## Project Status
+
+- **Latest LLM support**: Groq Llama-4-Scout-17B-16E-Instruct (OpenAI v1+), HuggingFace fallback
+- **Robust document heuristics**: All major insurance fields, including table extraction
+- **Modern prompt engineering**: Structured, context-rich, and few-shot guided
+- **Ready for production BFSI document Q&A**
