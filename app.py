@@ -2,6 +2,7 @@ from dotenv import load_dotenv
 load_dotenv()
 import streamlit as st
 from utils.llm_client import LLMClient
+from utils.memory_manager import MemoryManager
 from prompts.few_shot_templates import get_few_shot_prompt
 from utils.session_store import init_session, append_message, get_conversation
 from utils.pdf_processor import process_uploaded_pdf
@@ -91,6 +92,9 @@ if uploaded_file is not None:
 
 # Instantiate LLMClient with Hugging Face API key
 llm = LLMClient(api_key=os.getenv('HF_API_KEY'))
+
+# Initialize memory manager
+memory_manager = MemoryManager(llm)
 
 # Chat area
 st.subheader('💬 Chat')
@@ -383,13 +387,32 @@ def on_send():
         else:
             passages = query_index(faiss_index, KB_DOCS, user_input, k=3)
             kb_passages = passages
-        prompt = get_few_shot_prompt(
+        base_prompt = get_few_shot_prompt(
             st.session_state.context_page, 
             user_input.strip(), 
             kb_passages=kb_passages,
             doc_chunks=doc_chunks
         )
-        reply, rationale = llm.chat(prompt, kb_passages=kb_passages)
+        
+        # Add memory context to the prompt by modifying the system message
+        memory_ctx = memory_manager.get_memory_context()
+        if memory_ctx:
+            # Insert memory context after the system message but before examples
+            if "Context:" in base_prompt:
+                # Split at "Context:" and insert memory before it
+                parts = base_prompt.split("Context:", 1)
+                full_prompt = f"{parts[0]}### Conversation Memory:\n{memory_ctx}\n\nContext:{parts[1]}"
+            else:
+                # Fallback: just prepend if we can't find the Context section
+                full_prompt = f"### Conversation Memory:\n{memory_ctx}\n\n{base_prompt}"
+        else:
+            full_prompt = base_prompt
+        
+        reply, rationale = llm.chat(full_prompt, kb_passages=kb_passages)
+        
+        # Add this conversation turn to memory
+        memory_manager.add_turn(user_input.strip(), reply)
+        
         append_message('assistant', reply, rationale=rationale)
         st.session_state.user_input = ''
 
