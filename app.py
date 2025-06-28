@@ -397,14 +397,14 @@ def on_send():
         # Add memory context to the prompt by modifying the system message
         memory_ctx = memory_manager.get_memory_context()
         if memory_ctx:
-            # Insert memory context after the system message but before examples
-            if "Context:" in base_prompt:
-                # Split at "Context:" and insert memory before it
-                parts = base_prompt.split("Context:", 1)
-                full_prompt = f"{parts[0]}### Conversation Memory:\n{memory_ctx}\n\nContext:{parts[1]}"
+            # Insert memory context prominently at the beginning of the system message
+            if "You are a helpful assistant" in base_prompt:
+                # Split at the system message start and insert memory before it
+                parts = base_prompt.split("You are a helpful assistant", 1)
+                full_prompt = f"{parts[0]}### CONVERSATION MEMORY (Use this information for consistency):\n{memory_ctx}\n\nYou are a helpful assistant{parts[1]}"
             else:
-                # Fallback: just prepend if we can't find the Context section
-                full_prompt = f"### Conversation Memory:\n{memory_ctx}\n\n{base_prompt}"
+                # Fallback: prepend memory context
+                full_prompt = f"### CONVERSATION MEMORY (Use this information for consistency):\n{memory_ctx}\n\n{base_prompt}"
         else:
             full_prompt = base_prompt
         
