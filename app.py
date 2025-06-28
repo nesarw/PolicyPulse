@@ -7,7 +7,7 @@ from prompts.few_shot_templates import get_few_shot_prompt
 from utils.session_store import init_session, append_message, get_conversation
 from utils.pdf_processor import process_uploaded_pdf
 from utils.vector_store import build_index, query_index, search_document_chunks
-from utils.bfsi_filter import is_bfsi_query
+from utils.bfsi_filter import is_bfsi_query, safety_check
 import os
 import re
 
@@ -58,6 +58,19 @@ if stream_response:
     st.sidebar.info("🔄 Streaming mode enabled - responses will appear token by token")
 else:
     st.sidebar.info("📝 Regular mode - responses appear all at once")
+
+# Safety status indicator
+st.sidebar.markdown("---")
+st.sidebar.subheader("🛡️ Safety Status")
+if 'last_safety_check' in st.session_state:
+    safety = st.session_state['last_safety_check']
+    if safety['unsafe']:
+        st.sidebar.error(f"⚠️ Safety Alert: {safety['reason']}")
+    else:
+        st.sidebar.success("✅ Content is safe")
+    st.sidebar.info(f"BFSI Relevance: {safety['bfsi_score']} keywords")
+else:
+    st.sidebar.info("🔍 No safety check performed yet")
 
 st.title('PolicyPulse Chat')
 
@@ -119,6 +132,20 @@ if 'user_input' not in st.session_state:
 def on_send():
     user_input = st.session_state.user_input
     if user_input.strip():
+        # Safety check on user input first
+        input_safety = safety_check(user_input.strip(), "")
+        st.session_state['last_safety_check'] = input_safety
+        
+        if input_safety["unsafe"]:
+            warning_message = (
+                "⚠️ Your question may violate safety guidelines. "
+                "Please ensure your questions are appropriate and related to BFSI topics. "
+                "I can help you with legitimate banking, financial services, and insurance matters."
+            )
+            append_message('assistant', warning_message)
+            st.session_state.user_input = ''
+            return
+        
         append_message('user', user_input.strip())
         if not is_bfsi_query(user_input):
             refusal_message = (
@@ -437,6 +464,19 @@ def on_send():
             rationale = None
         else:
             reply, rationale = llm.chat(full_prompt, kb_passages=kb_passages)
+        
+        # Safety check on the response
+        safety_result = safety_check(user_input.strip(), reply)
+        st.session_state['last_safety_check'] = safety_result
+        
+        if safety_result["unsafe"]:
+            warning_message = (
+                "⚠️ This content may violate safety guidelines. "
+                "Please ensure your questions and responses are appropriate and related to BFSI topics. "
+                "If you need assistance with legitimate BFSI matters, I'm here to help."
+            )
+            reply = warning_message
+            rationale = f"Safety check flagged: {safety_result['reason']}"
         
         # Add this conversation turn to memory
         memory_manager.add_turn(user_input.strip(), reply)
