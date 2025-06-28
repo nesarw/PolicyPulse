@@ -1,6 +1,7 @@
 import os
 import requests
 import openai
+from huggingface_hub import InferenceClient
 
 class LLMClient:
     def __init__(self, api_key=None, model="HuggingFaceH4/zephyr-7b-beta"):
@@ -84,3 +85,35 @@ References:
         else:
             rationale = str(result_rationale)
         return reply, rationale
+
+    def stream_chat_response(self, prompt: str):
+        """
+        Stream tokens from HuggingFace InferenceClient as a generator.
+        Falls back to regular chat if streaming fails.
+        """
+        try:
+            # Use a more compatible model for streaming
+            streaming_model = "gpt2"  # More compatible than zephyr-7b-beta
+            client = InferenceClient(
+                model=streaming_model,
+                token=self.api_key
+            )
+            # Streaming text generation
+            stream = client.text_generation(
+                prompt,
+                max_new_tokens=256,
+                stream=True,
+                return_full_text=False
+            )
+            for response in stream:
+                # response is a dict with 'token' or a string (depending on HF version)
+                if isinstance(response, dict) and 'token' in response:
+                    yield response['token']
+                else:
+                    yield str(response)
+        except Exception as e:
+            print(f"Streaming failed: {e}. Falling back to regular chat.")
+            # Fallback to regular chat method
+            reply, _ = self.chat(prompt)
+            # Yield the reply as a single token for compatibility
+            yield reply

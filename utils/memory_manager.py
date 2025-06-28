@@ -58,20 +58,20 @@ class MemoryManager:
 
     def get_memory_context(self, n: int = 2) -> str:
         """
-        Return the last `n` summaries joined by newlines.
-        
+        Return the last `n` full user/assistant turns joined by newlines.
         Args:
-            n: Number of most recent summaries to return (default: 2)
-            
+            n: Number of most recent turns to return (default: 2)
         Returns:
-            String containing the memory context with summaries separated by newlines
+            String containing the memory context with turns separated by newlines
         """
-        if 'memories' not in st.session_state or not st.session_state.memories:
-            return ""
-        
-        # Get the last n summaries, or all if n is greater than available
-        recent_summaries = st.session_state.memories[-min(n, len(st.session_state.memories)):]
-        return "\n".join(recent_summaries)
+        conversation = st.session_state.get('conversation', [])
+        context = []
+        # Get the last n user/assistant pairs (so 2n turns)
+        for turn in conversation[-2*n:]:
+            role = turn['role'].capitalize()
+            content = turn['content']
+            context.append(f"{role}: {content}")
+        return "\n".join(context)
     
     def clear_memory(self):
         """Clear all stored summaries."""

@@ -49,6 +49,16 @@ init_session()
 # Sidebar for page selection
 page = st.sidebar.selectbox('Current Page', ['My Policies', 'Claims', 'Billing'])
 
+# Streaming toggle in sidebar
+st.sidebar.markdown("---")
+st.sidebar.subheader("⚙️ Settings")
+stream_response = st.sidebar.checkbox("Enable Streaming", value=st.session_state.get('stream_response', False))
+st.session_state['stream_response'] = stream_response
+if stream_response:
+    st.sidebar.info("🔄 Streaming mode enabled - responses will appear token by token")
+else:
+    st.sidebar.info("📝 Regular mode - responses appear all at once")
+
 st.title('PolicyPulse Chat')
 
 # File upload section
@@ -408,7 +418,23 @@ def on_send():
         else:
             full_prompt = base_prompt
         
-        reply, rationale = llm.chat(full_prompt, kb_passages=kb_passages)
+        # Streaming support
+        stream_response = False
+        if 'stream_response' in st.session_state:
+            stream_response = st.session_state['stream_response']
+        elif 'stream_response' in globals():
+            stream_response = globals()['stream_response']
+        # You can also add config-based check here if you have a config dict
+
+        if stream_response:
+            # Only accumulate the streamed reply here, do not render
+            reply_accum = ""
+            for token in llm.stream_chat_response(full_prompt):
+                reply_accum += token
+            reply = reply_accum
+            rationale = None
+        else:
+            reply, rationale = llm.chat(full_prompt, kb_passages=kb_passages)
         
         # Add this conversation turn to memory
         memory_manager.add_turn(user_input.strip(), reply)
