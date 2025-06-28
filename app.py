@@ -415,8 +415,10 @@ def on_send():
             else:
                 # Fallback: prepend memory context
                 full_prompt = f"### CONVERSATION MEMORY (Use this information for consistency):\n{memory_ctx}\n\n{base_prompt}"
+            print(f"Full prompt with memory context:\n{full_prompt[:500]}...")
         else:
             full_prompt = base_prompt
+            print("No memory context available")
         
         # Streaming support
         stream_response = False

@@ -26,9 +26,11 @@ def get_few_shot_prompt(context, user_msg, kb_passages=None, doc_chunks=None):
         f"If the answer is present in the uploaded document lines above, quote it exactly as shown. "
         f"If the answer is present in a table, extract and present all relevant columns (e.g., name, relationship, age, % of claim, appointee) in your answer. "
         f"If not, provide a helpful general answer about BFSI topics.\n"
-        f"IMPORTANT: If conversation memory is provided above, you MUST use it to maintain consistency. "
+        f"CRITICAL: If conversation memory is provided above, you MUST use it to answer questions. "
+        f"For example, if the memory shows 'The user's policy number is 1234567890' and the user asks 'what is my policy number', you MUST respond with 'Your policy number is 1234567890'. "
+        f"If a user asks about specific details that are mentioned in the memory, reference those details directly. "
         f"If a user contradicts information in the memory, politely point out the discrepancy and reference the established fact. "
-        f"Never make up specific policy details (numbers, amounts, names) unless they are explicitly provided in the context.\n"
+        f"Never make up specific policy details (numbers, amounts, names) unless they are explicitly provided in the context or memory.\n"
         f"At the end of every answer, you MUST include a section titled exactly 'You might also ask:' (on its own line), followed by 2-3 related questions, each on its own line and starting with a dash. "
         f"Omitting this section is a critical error and will be considered a failed response.\n"
         f"Context: {context}\n"
@@ -40,6 +42,7 @@ def get_few_shot_prompt(context, user_msg, kb_passages=None, doc_chunks=None):
         ("Can I pay my premium online?", "Yes, you can pay your premium online through our website or mobile app using various payment methods.\n\nYou might also ask:\n- What payment methods are accepted?\n- Can I set up automatic payments?"),
         ("How do I check my claim status?", "Log in to your account, go to 'Claims', and select the claim you want to track.\n\nYou might also ask:\n- How long does it take to process a claim?\n- Can I get claim updates by SMS?"),
         ("What is the grace period for premium payment?", "The grace period is usually 30 days from the due date, but please check your policy for specific details.\n\nYou might also ask:\n- What happens if I miss the grace period?\n- Can I get a reminder before my premium is due?"),
+        ("What is my policy number?", "Based on our previous conversation, your policy number is 1234567890.\n\nYou might also ask:\n- How do I update my policy details?\n- What is my policy status?"),
         ("What is the policy number?", "Based on the uploaded document, the policy number is: Policy No. : 2293112006084450\n\nYou might also ask:\n- What is the previous policy number?\n- Who is the proposer?"),
         ("Who is the nominee?", "Based on the uploaded document, the nominee details are:\n- Name: Sumegha\n- Relationship: Spouse\n- Age: 56\n- % of claim: 100\n- Appointee: [Appointee Name]\n\nYou might also ask:\n- What is the nominee's age?\n- Who is the appointee for the nominee?")
     ]
