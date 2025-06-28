@@ -1,5 +1,6 @@
 import os
 import requests
+import openai
 
 class LLMClient:
     def __init__(self, api_key=None, model="HuggingFaceH4/zephyr-7b-beta"):
@@ -7,12 +8,38 @@ class LLMClient:
         self.model = model
         self.api_url = f"https://api-inference.huggingface.co/models/{self.model}"
         self.headers = {"Authorization": f"Bearer {self.api_key}"}
+        # Groq config
+        self.groq_api_key = os.getenv("GROQ_API_KEY")
+        self.groq_api_base = "https://api.groq.com/openai/v1"
+        self.groq_model = "meta-llama/llama-4-scout-17b-16e-instruct"
 
     def chat(self, prompt, kb_passages=None):
         """
-        Sends the prompt to the LLM and returns a tuple (reply, rationale),
-        where rationale is a one-sentence summary of why the answer was given.
+        Try Groq Llama-4-Scout-17B-16E-Instruct first (using OpenAI v1+ interface). If it fails, fallback to HuggingFace.
+        Returns a tuple (reply, rationale).
         """
+        # 1. Try Groq (OpenAI v1+ interface)
+        if self.groq_api_key:
+            try:
+                groq_client = openai.OpenAI(
+                    api_key=self.groq_api_key,
+                    base_url=self.groq_api_base
+                )
+                response = groq_client.chat.completions.create(
+                    model=self.groq_model,
+                    messages=[
+                        {"role": "system", "content": "You are a helpful assistant."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.2,
+                    max_tokens=512,
+                )
+                reply = response.choices[0].message.content.strip()
+                # No rationale for Groq for now
+                return reply, None
+            except Exception as e:
+                print(f"[Groq LLM] Error: {e}. Falling back to HuggingFace model.")
+        # 2. Fallback to HuggingFace
         payload = {
             "inputs": prompt,
             "parameters": {"max_new_tokens": 256, "return_full_text": False}
@@ -28,14 +55,12 @@ class LLMClient:
             reply = result["generated_text"].strip()
         else:
             reply = str(result)
-
         # Refined rationale prompt, limit to top 2 KB passages
         limited_references = (kb_passages or [])[:2]
         references = "\n".join(limited_references).strip() if limited_references else ""
         if not references or references == "N/A":
             rationale = "No relevant facts or KB snippets were found for this answer."
             return reply, rationale
-
         rationale_prompt = f"""
 You are PolicyPulse. Given the following answer and ONLY the reference facts or KB snippets below, explain in one sentence which snippet(s) were most important in producing this answer. Do not mention anything not in the references.
 
@@ -58,5 +83,4 @@ References:
             rationale = result_rationale["generated_text"].strip()
         else:
             rationale = str(result_rationale)
-
         return reply, rationale
