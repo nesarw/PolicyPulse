@@ -6,4 +6,4 @@ sentence-transformers==2.2.2
 python-dotenv
 requests
 pdfplumber
-torch==2.0.1
+torch==2.7.0
