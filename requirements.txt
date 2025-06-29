@@ -2,8 +2,7 @@ streamlit
 openai
 jinja2
 faiss-cpu
-sentence-transformers==2.2.2
+sentence-transformers>=2.6.0
 python-dotenv
 requests
 pdfplumber
-torch==2.7.0
