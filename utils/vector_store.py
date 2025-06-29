@@ -9,7 +9,7 @@ def build_index(documents: List[str]) -> faiss.IndexFlatL2:
     Embeds each document with SentenceTransformer('all-MiniLM-L6-v2'),
     creates a FAISS IndexFlatL2, and adds the embeddings.
     """
-    model = SentenceTransformer('all-MiniLM-L6-v2', device='cpu')
+    model = SentenceTransformer('all-MiniLM-L6-v2')
     embeddings = model.encode(documents, convert_to_numpy=True)
     dim = embeddings.shape[1]
     index = faiss.IndexFlatL2(dim)
@@ -22,7 +22,7 @@ def query_index(index: faiss.IndexFlatL2, docs: List[str], query: str, k: int = 
     Embeds the query, searches the index for the top-k nearest docs,
     and returns the matching document texts.
     """
-    model = SentenceTransformer('all-MiniLM-L6-v2', device='cpu')
+    model = SentenceTransformer('all-MiniLM-L6-v2')
     query_embedding = model.encode([query], convert_to_numpy=True)
     D, I = index.search(query_embedding, k)
     return [docs[i] for i in I[0]]
@@ -43,7 +43,7 @@ def search_document_chunks(index: faiss.IndexFlatL2, doc_chunks: List[str], quer
     Returns:
         Tuple of (relevant_chunks, has_relevant_chunks)
     """
-    model = SentenceTransformer('all-MiniLM-L6-v2', device='cpu')
+    model = SentenceTransformer('all-MiniLM-L6-v2')
     query_embedding = model.encode([query], convert_to_numpy=True)
     
     # Search for top k results
