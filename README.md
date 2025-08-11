@@ -43,6 +43,19 @@ PolicyPulse supports **document-constrained Retrieval-Augmented Generation (RAG)
 5. **Fallback Protection**: If no relevant document content is found, the system falls back to the general BFSI knowledge base
 6. **Memory Integration**: Conversation memory is automatically injected to maintain context across turns
 
+## 🆕 Gemini 2.0 Flash Integration & Safety Improvements
+
+- 🚀 **Gemini 2.0 Flash**: The app now uses Google Gemini 2.0 Flash as the default LLM for fast, high-quality responses. The model is set via the `GEMINI_MODEL` environment variable (default: `gemini-2.0-flash`).
+- 🔑 **Automatic .env Loading**: All environment variables (including API keys) are loaded automatically from `.env` on app start—no manual loading required.
+- 🛡️ **Improved BFSI Filter**: The BFSI filter now requires only one relevant keyword for a query to be accepted, making it less strict and more user-friendly for simple BFSI questions.
+- 🚫 **Unsafe Content Cleaning**: If the LLM response contains unsafe words (e.g., violence, crime, etc.), those words are automatically removed from the response. The user receives a cleaned answer, with no `[redacted]` or placeholder tags shown.
+- ⚡ **Faster LLM Responses**: The maximum token count for LLM responses has been reduced for both Gemini and fallback models, resulting in faster answers.
+
+### Safety & Response Optimization
+- Unsafe or harmful content is never shown to the user; flagged words are silently removed.
+- If a response cannot be made safe, the user receives a polite apology instead of a warning.
+- The BFSI filter and safety logic are fully customizable in `utils/bfsi_filter.py`.
+
 ## Setup Instructions
 
 1. **Clone the repository:**
