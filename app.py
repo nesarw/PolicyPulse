@@ -477,6 +477,7 @@ def on_send():
             )
             reply = warning_message
             rationale = f"Safety check flagged: {safety_result['reason']}"
+        # Only block if unsafe, not just if not BFSI relevant
         
         # Add this conversation turn to memory
         memory_manager.add_turn(user_input.strip(), reply)

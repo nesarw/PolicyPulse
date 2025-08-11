@@ -66,7 +66,7 @@ def safety_check(user_input: str, response_text: str) -> dict:
             bfsi_count += 1
     
     result["bfsi_score"] = bfsi_count
-    result["bfsi_relevance"] = bfsi_count >= 2  # Require at least 2 BFSI keywords for relevance
+    result["bfsi_relevance"] = bfsi_count >= 1  # Require at least 1 BFSI keyword for relevance
     
     # Additional safety checks
     if not result["unsafe"]:

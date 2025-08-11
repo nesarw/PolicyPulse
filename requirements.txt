@@ -6,3 +6,5 @@ sentence-transformers>=2.6.0
 python-dotenv
 requests
 pdfplumber
+huggingface_hub
+google-generativeai
