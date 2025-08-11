@@ -61,7 +61,7 @@ class LLMClient:
             pass
         return None
 
-    def _gemini_generate(self, prompt: str, max_tokens: int = 512, temperature: float = 0.2):
+    def _gemini_generate(self, prompt: str, max_tokens: int = 128, temperature: float = 0.2):
         """Generate content with Gemini. Returns text or raises Exception."""
         if genai is None:
             raise RuntimeError("google-generativeai is not installed. Add 'google-generativeai' to requirements.")
@@ -133,7 +133,7 @@ References:
 
         payload = {
             "inputs": prompt,
-            "parameters": {"max_new_tokens": 256, "return_full_text": False}
+            "parameters": {"max_new_tokens": 128, "return_full_text": False}
         }
         response = requests.post(self.api_url, headers=self.headers, json=payload)
         if response.status_code == 404:

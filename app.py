@@ -7,7 +7,7 @@ from prompts.few_shot_templates import get_few_shot_prompt
 from utils.session_store import init_session, append_message, get_conversation
 from utils.pdf_processor import process_uploaded_pdf
 from utils.vector_store import build_index, query_index, search_document_chunks
-from utils.bfsi_filter import is_bfsi_query, safety_check
+from utils.bfsi_filter import is_bfsi_query, safety_check, clean_unsafe_content
 import os
 import re
 
@@ -470,13 +470,14 @@ def on_send():
         st.session_state['last_safety_check'] = safety_result
         
         if safety_result["unsafe"]:
-            warning_message = (
-                "⚠️ This content may violate safety guidelines. "
-                "Please ensure your questions and responses are appropriate and related to BFSI topics. "
-                "If you need assistance with legitimate BFSI matters, I'm here to help."
-            )
-            reply = warning_message
-            rationale = f"Safety check flagged: {safety_result['reason']}"
+            cleaned_reply = clean_unsafe_content(reply)
+            cleaned_safety = safety_check(user_input.strip(), cleaned_reply)
+            if not cleaned_safety["unsafe"]:
+                reply = cleaned_reply
+                rationale = "Some unsafe words were removed for safety."
+            else:
+                reply = "Sorry, I couldn't provide a safe answer to your question."
+                rationale = "Content could not be made safe."
         # Only block if unsafe, not just if not BFSI relevant
         
         # Add this conversation turn to memory

@@ -84,3 +84,11 @@ def safety_check(user_input: str, response_text: str) -> dict:
                 break
     
     return result 
+
+def clean_unsafe_content(text):
+    import re
+    for word in UNSAFE_WORDS:
+        pattern = re.compile(r'\b' + re.escape(word) + r'\b', re.IGNORECASE)
+        text = pattern.sub(' ', text)  # Replace with a space
+    text = re.sub(r'\s+', ' ', text).strip()  # Clean up extra spaces
+    return text 
